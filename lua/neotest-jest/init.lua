@@ -372,6 +372,15 @@ local function parsed_json_to_results(data, output_file, consoleOut)
   return tests
 end
 
+local function reducePattern(cwd, path)
+  print(cwd)
+  print(path)
+  local normalized_cwd = vim.fn.resolve(vim.fs.normalize(cwd) .. '/')
+  local normalized_path = vim.fs.normalize(path)
+
+  return vim.fn.substitute(normalized_path, normalized_cwd, '', 'g');
+end
+
 ---@param args neotest.RunArgs
 ---@return neotest.RunSpec | nil
 function adapter.build_spec(args)
@@ -409,6 +418,8 @@ function adapter.build_spec(args)
     table.insert(command, "--config=" .. config)
   end
 
+  local cwd = getCwd(pos.path)
+
   vim.list_extend(command, {
     "--no-coverage",
     "--testLocationInResults",
@@ -417,10 +428,8 @@ function adapter.build_spec(args)
     "--outputFile=" .. results_path,
     "--testNamePattern=" .. testNamePattern,
     "--forceExit",
-    escapeTestPattern(vim.fs.normalize(pos.path)),
+    reducePattern(cwd, pos.path),
   })
-
-  local cwd = getCwd(pos.path)
 
   -- creating empty file for streaming results
   lib.files.write(results_path, "")
